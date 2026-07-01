@@ -10,7 +10,8 @@
     2.3 — Реализовать потокобезопасный банковский счёт
 
 📖 См. лекцию 1, раздел 3 (Threading) и пример:
-   lectures/01_lecture/examples/02_threading/03_race_condition.py
+   lectures/01_lecture/examples/02_threading/02_thread_pool.py
+   (Часть 3 Race condition — показана гонка и Lock)
 """
 
 import threading

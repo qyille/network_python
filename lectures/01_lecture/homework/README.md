@@ -2,7 +2,8 @@
 
 ## 🎯 Цель
 
-Закрепить на практике три способа организации конкурентного кода в Python.
+Закрепить на практике четыре способа организации конкурентного кода в Python:
+threading, синхронизацию, multiprocessing и asyncio.
 
 ## 📁 Структура
 
@@ -17,7 +18,7 @@ lectures/01_lecture/homework/
 ├── 03_multiprocessing/     # Multiprocessing Pool
 │   ├── task.py
 │   └── test_multiprocessing.py
-├── 04_asyncio/             # Asyncio
+├── 04_asyncio/             # Asyncio (7 заданий)
 │   ├── task.py
 │   └── test_asyncio.py
 ├── conftest.py             # общие настройки pytest
@@ -37,18 +38,22 @@ lectures/01_lecture/homework/
 перед тем, как писать код домашки:
 
 ```bash
+# Синхронный код и I/O vs CPU
+python lectures/01_lecture/examples/01_sync/01_sequential.py
+python lectures/01_lecture/examples/01_sync/02_io_vs_cpu.py
+
 # threading
 python lectures/01_lecture/examples/02_threading/01_simple_thread.py
 python lectures/01_lecture/examples/02_threading/02_thread_pool.py
-python lectures/01_lecture/examples/02_threading/03_race_condition.py
 
 # multiprocessing
 python lectures/01_lecture/examples/03_multiprocessing/02_cpu_bound.py
 
 # asyncio
-python lectures/01_lecture/examples/04_asyncio/01_basic_coroutine.py
-python lectures/01_lecture/examples/04_asyncio/02_gather.py
-python lectures/01_lecture/examples/04_asyncio/03_tasks.py
+python lectures/01_lecture/examples/04_asyncio/01_task_group.py
+python lectures/01_lecture/examples/04_asyncio/02_timeouts.py
+python lectures/01_lecture/examples/04_asyncio/03_cancelation.py
+python lectures/01_lecture/examples/04_asyncio/04_as_completed.py
 ```
 
 ### Шаг 3. Реализуйте функции
@@ -91,6 +96,9 @@ git push
 | **Граничные случаи** | Пустой список, один элемент |
 | **Потокобезопасность** | Гонок данных нет (Lock) |
 | **Производительность** | Параллельная версия быстрее последовательной |
+| **Таймауты** | Операция прерывается по истечении времени |
+| **Отмена** | CancelledError обрабатывается корректно |
+| **Групповые ошибки** | TaskGroup правильно собирает исключения |
 
 ## 📋 Описание заданий
 
@@ -117,21 +125,14 @@ git push
 - **3.1** — Реализовать последовательную и параллельную (через multiprocessing.Pool) версии вычислений.
 - **3.2** — Реализовать ту же задачу через ThreadPoolExecutor — должно быть медленнее, чем Pool. Это демонстрация влияния GIL.
 
-### 04_asyncio — Асинхронное программирование
+### 04_asyncio — Асинхронное программирование (7 заданий)
 
-**Контекст:** нужно обработать тысячи запросов в одном потоке. Создавать поток на каждый запрос — слишком дорого по памяти.
+**Контекст:** нужно обработать тысячи запросов в одном потоке. Asyncio позволяет держать тысячи соединений без создания потоков.
 
-- **4.1** — Написать первую корутину: async def функция, которая имитирует I/O через await asyncio.sleep().
-- **4.2** — Запустить несколько корутин конкурентно через asyncio.gather(). Результаты в порядке исходных URL.
-- **4.3** *(повышенная сложность)* — Смешать синхронный CPU-bound код с асинхронным. Выгрузить блокирующие вычисления в отдельный поток через asyncio.to_thread(), чтобы не блокировать event loop.
-
-## 💡 Подсказки
-
-| Задание | Инструмент | Суть |
-|---------|-----------|------|
-| 01_threadpool | `ThreadPoolExecutor` | Пул готовых потоков, которым отдаются задачи |
-| 01_threadpool | `as_completed` | Получение результатов по мере готовности |
-| 02_race_condition | `Lock` | Защита критических секций от одновременного доступа |
-| 03_multiprocessing | `multiprocessing.Pool` | Пул процессов для CPU-bound задач |
-| 04_asyncio | `asyncio.gather` | Конкурентный запуск корутин |
-| 04_asyncio | `asyncio.to_thread` | Выгрузка blocking-кода из async |
+- **4.1** — Написать первую корутину: async def функция с await asyncio.sleep().
+- **4.2** — Запустить несколько корутин конкурентно через asyncio.gather().
+- **4.3** — Использовать asyncio.TaskGroup для запуска группы задач и обработки исключений.
+- **4.4** — Добавить таймаут для долгой операции через asyncio.wait_for().
+- **4.5** — Реализовать корректную отмену задачи: отловить CancelledError и подчистить ресурсы.
+- **4.6** — Использовать asyncio.as_completed() для получения результатов по мере готовности.
+- **4.7** *(повышенная сложность)* — Выгрузить CPU-bound код в пул потоков через asyncio.to_thread(), чтобы не блокировать event loop.

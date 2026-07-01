@@ -11,8 +11,8 @@
     1.3 — Прогресс-бар (повышенная сложность)
 
 📖 См. лекцию 1, раздел 3 (Threading) и примеры:
+   lectures/01_lecture/examples/02_threading/01_simple_thread.py
    lectures/01_lecture/examples/02_threading/02_thread_pool.py
-   lectures/01_lecture/examples/02_threading/03_race_condition.py
 """
 
 from typing import Callable

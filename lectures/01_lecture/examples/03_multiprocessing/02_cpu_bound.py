@@ -26,7 +26,7 @@ def count_primes(limit: int) -> int:
 
 def main() -> None:
     n_workers = mp.cpu_count()
-    limit = 150_000
+    limit = 300_000
     print("03_multiprocessing/02_cpu_bound: CPU-bound (простые числа)")
     print("=" * 55)
     print(f"   Ядер CPU: {n_workers}, предел: {limit}")
