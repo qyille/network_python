@@ -16,6 +16,8 @@
 """
 
 from typing import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed, wait
+import time
 
 
 # ═══════════════════════════════════════════════════════════
@@ -34,7 +36,6 @@ def fetch_one(url: str) -> str:
 def fetch_one_with_delay(url_delay: tuple[str, float]) -> str:
     """Заглушка с кастомной задержкой: (url, delay) -> data."""
     url, delay = url_delay
-    import time
 
     time.sleep(delay)
     return f"data:{url}"
@@ -62,7 +63,9 @@ def fetch_all(urls: list[str], max_workers: int = 4) -> list[str]:
         ['data:a', 'data:b', 'data:c']
     """
     # TODO: реализуйте
-    raise NotImplementedError
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        results = list(executor.map(fetch_one, urls))
+    return results
 
 
 # ═══════════════════════════════════════════════════════════
@@ -86,7 +89,20 @@ def fetch_all_with_errors(urls: list[str], max_workers: int = 4) -> list[str | N
         - Для остальных — результат fetch_one()
     """
     # TODO: реализуйте
-    raise NotImplementedError
+    def safe_fetch(url: str) -> str | None:
+        if "bad" in url:
+            try:
+                raise ConnectionError(f"Failed to connect to {url}")
+            except ConnectionError:
+                return None
+        try:
+            return fetch_one(url)
+        except Exception:
+            return None
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        results = list(executor.map(safe_fetch, urls))
+    return results
 
 
 # ═══════════════════════════════════════════════════════════
@@ -123,5 +139,26 @@ def fetch_all_with_progress(
         )
         # completed[-1] == 3
     """
-    # TODO: реализуйте
-    raise NotImplementedError
+    results = []
+    total = len(urls)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_url = {
+            executor.submit(fetch_one, url): url
+            for url in urls
+        }
+
+        completed = 0
+        for future in as_completed(future_to_url):
+            url = future_to_url[future]
+            try:
+                result = future.result()
+                results.append(result)
+            except Exception:
+                results.append(f"error:{url}")
+
+            completed += 1
+            if progress_callback is not None:
+                progress_callback(completed, total)
+
+    return results
