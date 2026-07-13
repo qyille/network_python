@@ -1,0 +1,89 @@
+name: Homework CI — Лекция 2 (REST, FastAPI)
+
+on:
+  push:
+    paths:
+      - "lectures/02_lecture/homework/**"
+  pull_request:
+    paths:
+      - "lectures/02_lecture/homework/**"
+
+# Отменяем предыдущий запуск, если был новый push
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Проверка домашних заданий
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+      fail-fast: false
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐍 Установка Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 📦 Установка зависимостей
+        working-directory: lectures/02_lecture/homework
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn httpx pytest pytest-timeout
+
+      - name: 🧪 Запуск тестов
+        working-directory: lectures/02_lecture/homework
+        run: |
+          python -m pytest -v \
+            --tb=short \
+            --timeout=60 \
+            --junitxml=results.xml \
+            --no-header \
+            2>&1 | head -200
+
+      - name: 📊 Сохранение результатов
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results-02-${{ matrix.python-version }}
+          path: lectures/02_lecture/homework/results.xml
+
+      - name: 📋 Итог
+        if: always()
+        run: |
+          if grep -q 'failures="0"' lectures/02_lecture/homework/results.xml 2>/dev/null; then
+            echo "✅ Все тесты пройдены!"
+          else
+            echo "❌ Некоторые тесты не прошли. Проверьте логи выше."
+          fi
+
+  check_not_implemented:
+    name: Проверка на нерешённые задания
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🔍 Поиск NotImplementedError
+        working-directory: lectures/02_lecture/homework
+        run: |
+          found=0
+          while IFS= read -r f; do
+            if grep -n "NotImplementedError" "$f" > /dev/null 2>&1; then
+              echo "❌ $f: ещё есть нереализованные функции:"
+              grep -n "NotImplementedError" "$f"
+              found=1
+            fi
+          done < <(find . -name 'task.py' -type f)
+          if [ "$found" -eq 1 ]; then
+            echo ""
+            echo "❌ Некоторые задания ещё не решены."
+            echo "   Замените raise NotImplementedError на рабочий код."
+            exit 1
+          fi
+          echo "✅ Все задания решены — NotImplementedError не найдены"
