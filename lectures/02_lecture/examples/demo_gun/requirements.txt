@@ -1,0 +1,4 @@
+fastapi>=0.100
+flask>=3.0
+httpx>=0.24
+uvicorn[standard]>=0.24

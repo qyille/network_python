@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package errors;
+
+// ─── Обработка ошибок в gRPC ───────────────────────────────────────────────
+// В REST ошибки передаются через HTTP-статус + JSON-тело.
+// В gRPC — через grpc.StatusCode + детальное сообщение.
+
+service Calculator {
+    // Divide — деление с защитой от zero division
+    rpc Divide (DivideRequest) returns (DivideResponse);
+
+    // Sqrt — квадратный корень (отрицательное число → ошибка)
+    rpc Sqrt (SqrtRequest) returns (SqrtResponse);
+}
+
+message DivideRequest {
+    double a = 1;
+    double b = 2;
+}
+
+message DivideResponse {
+    double result = 1;
+}
+
+message SqrtRequest {
+    double number = 1;
+}
+
+message SqrtResponse {
+    double result = 1;
+}

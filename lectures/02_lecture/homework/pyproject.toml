@@ -1,0 +1,10 @@
+[project]
+name = "homework-lecture-2"
+version = "1.0.0"
+description = "Домашние задания к лекции 2: REST API, HTTP, FastAPI"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+timeout = 30
+console_output_style = "count"
+addopts = "-v --tb=short --strict-markers --showlocals --color=yes"

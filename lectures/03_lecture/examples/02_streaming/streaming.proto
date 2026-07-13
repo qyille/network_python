@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package streaming;
+
+// ─── 4 типа gRPC-вызовов ───────────────────────────────────────────────────
+//
+// 1. Unary:             клиент → 1 запрос, сервер → 1 ответ
+// 2. Server streaming:  клиент → 1 запрос, сервер → N ответов (stream)
+// 3. Client streaming:  клиент → N запросов (stream), сервер → 1 ответ
+// 4. Bidirectional:     клиент → N запросов, сервер → N ответов (stream)
+
+service DataService {
+    // 1. Unary — обычный запрос-ответ
+    rpc GetItem (ItemRequest) returns (Item);
+
+    // 2. Server streaming — сервер шлёт пачку данных
+    rpc ListItems (ListRequest) returns (stream Item);
+
+    // 3. Client streaming — клиент шлёт пачку, сервер подводит итог
+    rpc AddItems (stream Item) returns (Summary);
+
+    // 4. Bidirectional streaming — чат
+    rpc Chat (stream ChatMessage) returns (stream ChatMessage);
+}
+
+message ItemRequest {
+    int32 id = 1;
+}
+
+message ListRequest {
+    int32 page_size = 1;
+    string filter = 2;
+}
+
+message Item {
+    int32 id = 1;
+    string name = 2;
+    float price = 3;
+}
+
+message Summary {
+    int32 total = 1;
+    float total_price = 2;
+}
+
+message ChatMessage {
+    string user = 1;
+    string text = 2;
+    int32 seq = 3;
+}

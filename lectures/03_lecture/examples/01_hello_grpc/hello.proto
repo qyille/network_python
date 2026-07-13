@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package hello;
+
+// ─── Простейший gRPC-сервис ───────────────────────────────────────────────
+// protobuf (Protocol Buffers) — это язык описания данных и интерфейсов.
+// Одно .proto-определение → код для Python, Go, Java и т.д.
+
+service Greeter {
+    // Unary RPC: клиент шлёт 1 запрос → сервер отвечает 1 ответом.
+    rpc SayHello (HelloRequest) returns (HelloReply);
+}
+
+message HelloRequest {
+    string name = 1; 
+}
+
+message HelloReply {
+    string message = 1;
+}
