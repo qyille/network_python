@@ -154,7 +154,7 @@ def fetch_all_with_progress(
             try:
                 result = future.result()
                 results.append(result)
-            except Exception:
+            except Exception: #asdasdasdasd
                 results.append(f"error:{url}")
 
             completed += 1
