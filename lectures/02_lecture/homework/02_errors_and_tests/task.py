@@ -16,14 +16,12 @@
         ✓ GET  /items/{id}/counter → race condition отсутствует
         ✓ GET  /slow-sync → async def + await asyncio.sleep
         ✓ DELETE возвращает правильный статус (204)
-
-Задача Б: Написать тесты в test_errors.py
-    Покрыть все эндпоинты.
 """
 
+import asyncio
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse, Response
+from pydantic import BaseModel, Field
 
 app = FastAPI()
 
@@ -33,15 +31,36 @@ COUNTER = 0
 
 
 class ItemCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1)
 
 
 class ItemUpdate(BaseModel):
-    name: str = ""
+    name: str = Field(min_length=1)
+
+
+class ItemNotFoundException(Exception):
+    """Предмет не найден."""
+    pass
+
+
+@app.exception_handler(ItemNotFoundException)
+async def item_not_found_handler(request: Request, exc: ItemNotFoundException):
+    return JSONResponse(
+        status_code=404,
+        content={"detail": "Item not found"}
+    )
+
+
+@app.exception_handler(ZeroDivisionError)
+async def zero_division_handler(request: Request, exc: ZeroDivisionError):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": "Division by zero is not allowed"}
+    )
 
 
 # ═══════════════════════════════════════════════════════════
-# ИСПРАВЛЯЙТЕ НИЖЕ
+# ЭНДПОИНТЫ
 # ═══════════════════════════════════════════════════════════
 
 
@@ -52,43 +71,61 @@ def list_items():
 
 @app.get("/items/{item_id}")
 def get_item(item_id: int):
-    # TODO:
-    raise NotImplementedError
+    if item_id not in ITEMS:
+        raise ItemNotFoundException()
+    return ITEMS[item_id]
 
 
 @app.post("/items", status_code=201)
 def create_item(item: ItemCreate):
-    # TODO:
-    raise NotImplementedError
+    global NEXT_ID
+
+    new_item = {
+        "id": NEXT_ID,
+        "name": item.name
+    }
+    ITEMS[NEXT_ID] = new_item
+    NEXT_ID += 1
+
+    return new_item
+
+
+@app.put("/items/{item_id}")
+def update_item(item_id: int, update: ItemUpdate):
+    if item_id not in ITEMS:
+        raise ItemNotFoundException()
+
+    ITEMS[item_id]["name"] = update.name
+    return ITEMS[item_id]
+
+
+@app.delete("/items/{item_id}")
+def delete_item(item_id: int):
+    if item_id not in ITEMS:
+        raise ItemNotFoundException()
+
+    del ITEMS[item_id]
+    return Response(status_code=204)
 
 
 @app.get("/items/{item_id}/counter")
 def get_counter(item_id: int):
-    # TODO:
+    if item_id not in ITEMS:
+        raise ItemNotFoundException()
+
     global COUNTER
     COUNTER += 1
     return {"counter": COUNTER}
 
 
-@app.put("/items/{item_id}")
-def update_item(item_id: int, update: ItemUpdate):
-    # TODO:
-    raise NotImplementedError
-
-
-@app.delete("/items/{item_id}")
-def delete_item(item_id: int):
-    # TODO:
-    raise NotImplementedError
-
-
 @app.get("/divide")
 def divide(a: int, b: int):
-    # TODO:
-    raise NotImplementedError
+    if b == 0:
+        raise ZeroDivisionError("Division by zero")
+    return {"result": a / b}
 
 
 @app.get("/slow-sync")
 async def slow_sync():
-    # TODO:
-    raise NotImplementedError
+    await asyncio.sleep(0.5)
+    return {"status": "done"}
